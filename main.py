@@ -3,10 +3,6 @@ import requests
 import socket
 from datetime import datetime
 
-# server重啟若時發生 Address already in use 解決方法
-# ps -fA | grep python
-# kill 81951
-
 # 讀取config.ini檔案
 config = configparser.ConfigParser()
 config.read('setting.ini',encoding='utf-8')
