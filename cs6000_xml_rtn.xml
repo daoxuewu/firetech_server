@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<records>
+    <device>
+        <mac>8cce4ef9de64</mac>
+        <id>873078310802068477</id>
+        <timestamp>1658810921896</timestamp>
+        <state>Normal</state>
+        <temperature>28</temperature>
+        <smoke>0</smoke>
+    </device>
+    <device>
+        <mac>e8db8483c2c6</mac>
+        <id>7703041567800638054</id>
+        <timestamp>1658808989397</timestamp>
+        <state>Normal</state>
+        <temperature>27.2</temperature>
+        <smoke>0</smoke>
+    </device>
+    <device>
+        <mac>e8db84844a84</mac>
+        <id>5661329689216681651</id>
+        <timestamp>1658809031365</timestamp>
+        <state>Normal</state>
+        <temperature>27.3</temperature>
+        <smoke>0</smoke>
+    </device>
+</records>

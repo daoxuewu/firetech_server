@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!--Import the Bootstrap stylesheet-->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <!--Import our custom stylesheet-->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!--Import our web icon-->
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}">   
+  <title>某某機構展示server</title>
+  <!-- This page will auto refresh after 60 seconds. -->
+  <script type="text/JavaScript">
+    function timeRefresh(timeoutPeriod) {
+        setTimeout("location.reload(true);", timeoutPeriod);
+    }
+  </script>
+</head>
+<body class="bg-color-blue" onLoad="JavaScript:timeRefresh(60000);">
+
+  <div class="title">某某機構展示 </div> 
+  <div><a class="link_btn" href="alert_history">查看煙溫警報歷史紀錄</a></div>
+  <div class="container">
+    <table class="table">
+      <tr class="table__header">
+          {% for header in homepage_headings %}
+          <th class="table__cell">{{ header }}</th>
+          {% endfor %}
+      </tr>
+      {% for row in all_python_record_data %}
+      <tr class="table__row">
+        {% for cell in row %}
+          {% if 'graph' in cell  %}
+            <td class="table_cell">
+              <a href="{{ cell }}">
+                <div style="height:100%;width:100%">
+                  link
+                </div>
+              </a>
+            </td>
+          {% else %}
+            <td class="table_cell">{{ cell }}</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</body>
+</html>
+
+

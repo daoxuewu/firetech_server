@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <!--Import the Bootstrap stylesheet-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+        <!--Import our custom stylesheet-->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <title> alert history </title> 
+          <!-- This page will auto refresh after 10 minutes. -->
+        <script type="text/JavaScript">
+            function timeRefresh(timeoutPeriod) {
+                setTimeout("location.reload(true);", timeoutPeriod);
+            }
+        </script>
+    </head>
+    <body class="bg-color-blue" onLoad="JavaScript:timeRefresh(600000);">
+
+        <div class="title">煙溫警報歷史紀錄 </div> 
+        <div><a class="link_btn" href="{{ url_for('index') }}">回首頁</a></div>
+        <div class="container">
+            <table class="table">
+              <tr class="table__header">
+                  {% for header in alert_history_page_headings %}
+                  <th class="table__cell">{{ header }}</th>
+                  {% endfor %}
+              </tr>
+              {% for row in python_alert_history_data %}
+              <tr class="table__row">
+                  {% for cell in row %}
+                  <td class="table_cell">{{ cell }}</td>
+                  {% endfor %}
+              </tr>
+              {% endfor %}
+            </table>
+          </div>
+    </body>
+</html>
