@@ -1,6 +1,6 @@
 # firetech_server
 
-reference:  
+reference :  
 [Python 讀取、寫入 XML 格式檔案教學](https://officeguide.cc/python-read-write-xml-format-file-tutorial-examples/)  
 [Chart.js 官方文件](https://www.chartjs.org/docs/latest/)  
 [How to display dynamic data tables with Python, Flask, and Jinja2](https://www.youtube.com/watch?v=mCy52I4exTU)  
