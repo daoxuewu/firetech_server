@@ -18,7 +18,7 @@ class Config(object):
     JOBS = [
         {
             'id': 'job1',# Job 的唯一ID
-            'func': 'ser:aps_test', # Job 執行的function
+            'func': 'ser:auto_save_log', # Job 執行的function
             # 'args': (1, 2), # 如果function需要参数，就在这里添加
             # 'trigger': 'interval',
             # 'seconds': 3
@@ -29,18 +29,87 @@ class Config(object):
                 # 'minutes': 1,    # 每間隔一分鐘執行一次
                 'hours': 1,        # 每間個一小時執行一次
             }
+        },{
+            'id': 'job2',# Job 的唯一ID
+            'func': 'ser:per_minute_request_xml', # Job 執行的function
+            # 'args': (1, 2), # 如果function需要参数，就在这里添加
+            'trigger': {
+                'type': 'interval', # 類型
+                'minutes': 1,    # 每間隔一分鐘執行一次
+            }
         }
+
     ]
     #APS(調度器)的API的開關
     SCHEDULER_API_ENABLED = True 
 
-# test
-def aps_test():
-    per_hr_wirte_log()
-    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '已自動儲存一筆資料')
+def auto_save_log():
+    try:
+        wirte_log_to_per_hr()
+        print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '已自動儲存一筆資料') # 印出儲存資料的時間
+    except Exception as e:
+        print ("發生錯誤，錯誤訊息(e) => ",e,"錯誤訊息(詳細內容) => ",e.args[0]) #e.args[0]取得詳細內容
 
-# 每小時存一次資料到per_hr_log.txt
-def per_hr_wirte_log():
+def per_minute_request_xml():
+    try:
+        print('----------------------------')
+        print("於",datetime.now().strftime('%Y-%m-%d %H:%M:%S'),"抓取xml資料(每分鐘執行一次)")
+    
+        write_xml_rtn_to_file() #把xml返回值寫進檔案cs6000_xml_rtn.xml
+    
+        # 從檔案載入並解析 XML 資料
+        tree = ET.parse('cs6000_xml_rtn.xml')
+        root = tree.getroot()    
+
+        # 讀到幾個裝置的初始值
+        device_index = 0 
+        # 只從第一層子節點中搜尋，傳回所有找到的節點
+        for country in root.findall('device'):
+            # 只從第一層子節點中搜尋，傳回第一個找到的節點
+            mac = country.find('mac').text
+            id = country.find('id').text
+            timestamp = country.find('timestamp').text
+            state = country.find('state').text
+            temperature = country.find('temperature').text # 只有廠商類型為「全部分享」時才顯示temperature、smoke資訊。
+            smoke = country.find('smoke').text
+            
+            timeString = timestamp_to_strtime(timestamp) # 因為java裡預設是13位（milliseconds，毫秒級的），python是10位(秒級的)，所以收到的資料這邊要做一個轉換
+
+            device_index += 1 #裝置編號，每執行一次迴圈就加一
+            print(f'*****device{device_index}*****','\nmac:',mac ,'\nid:', id, '\ntimestamp', timeString, '\nstate', state, '\ntemperature', temperature ,'\nsmoke', smoke)
+
+            print('【辨識】')
+            if mac not in macids:
+                print(f'未設定裝置識別碼:{mac}')
+                return f'裝置識別碼(mac):{mac} 未設定'
+            else:
+                print(f"成功識別裝置!")
+
+            #若火警，將資料寫入alert_log.txt、並且進行linenoitfy推播
+            if state == "Alarm":
+                for token in notify_config[mac]:
+                    print('{}, token:{}'.format(token,notify_config[mac][token]))
+                    lineNotifyMessage(notify_config[mac][token], f'\n案場火災警報!!\n裝置:{mac}\n溫度值:{temperature}°C,煙值:{smoke}%')
+                with open('alert_log.txt','a+',encoding='utf-8') as file: # a+ 打開一個文件用於讀寫。如果該文件已存在，文件指針將會放在文件的结尾。文件打開時會是追加模式。如果該文件不存在，創建新文件用於讀寫。
+                    log_data='狀態: '+state+','+'裝置識別碼: '+mac+','+'溫度值: '+temperature+'°C,'+'煙值: '+smoke+'%,'+timeString+'\n' # add backslash n for the newline characters at the end of each line
+                    file.write(log_data)
+            elif state == "Warning": #若預警，將資料寫入alert_log.txt、並且進行linenoitfy推播
+                for token in notify_config[mac]:
+                    print('{}, token:{}'.format(token,notify_config[mac][token]))
+                    lineNotifyMessage(notify_config[mac][token], f'\n案場預警!!\n裝置:{mac}\n溫度值:{temperature}°C,煙值:{smoke}%')
+                with open('alert_log.txt','a+',encoding='utf-8') as file: # a+ 打開一個文件用於讀寫。如果該文件已存在，文件指針將會放在文件的结尾。文件打開時會是追加模式。如果該文件不存在，創建新文件用於讀寫。
+                    log_data='狀態: '+state+','+'裝置識別碼: '+mac+','+'溫度值: '+temperature+'°C,'+'煙值: '+smoke+'%,'+timeString+'\n' # add backslash n for the newline characters at the end of each line
+                    file.write(log_data)
+            elif state == "Normal":
+                print(f'''案場狀態正常,裝置識別碼:{mac} 溫度值:{temperature}°C 煙值:{smoke}%''')
+            else:
+                print(f'案場狀態異常，接收到的狀態為:{state}')
+                return f'案場狀態異常，接收到的狀態為:{state}'
+    except Exception as e:
+        print ("發生錯誤，錯誤訊息(e) => ",e,"錯誤訊息(詳細內容) => ",e.args[0]) #e.args[0]取得詳細內容
+
+# 存資料到per_hr_log.txt
+def wirte_log_to_per_hr():
     # 從檔案載入並解析 XML 資料
     tree = ET.parse('cs6000_xml_rtn.xml')
     root = tree.getroot()    
@@ -174,8 +243,6 @@ def write_xml_rtn_to_file():
 # server首頁
 @app.route("/")
 def index():
-    write_xml_rtn_to_file() #把xml返回值寫進檔案cs6000_xml_rtn.xml
-    print('----------------------------')
 
     # 從檔案載入並解析 XML 資料
     tree = ET.parse('cs6000_xml_rtn.xml')
@@ -210,29 +277,11 @@ def index():
         else:
             print(f"成功識別裝置!")
 
-        #若火警，將資料寫入alert_log.txt、並且進行linenoitfy推播
-        if state == "Alarm":
-            for token in notify_config[mac]:
-                print('{}, token:{}'.format(token,notify_config[mac][token]))
-                lineNotifyMessage(notify_config[mac][token], f'\n案場警報!!\n裝置:{mac}\n溫度值:{temperature}°C,煙值:{smoke}%')
-            with open('alert_log.txt','a+',encoding='utf-8') as file: # a+ 打開一個文件用於讀寫。如果該文件已存在，文件指針將會放在文件的结尾。文件打開時會是追加模式。如果該文件不存在，創建新文件用於讀寫。
-                log_data='狀態: '+state+','+'裝置識別碼: '+mac+','+'溫度值: '+temperature+'°C,'+'煙值: '+smoke+'%,'+timeString+'\n' # add backslash n for the newline characters at the end of each line
-                file.write(log_data)
-        elif state == "Warning": #若預警，將資料寫入alert_log.txt、並且進行linenoitfy推播
-            for token in notify_config[mac]:
-                print('{}, token:{}'.format(token,notify_config[mac][token]))
-                lineNotifyMessage(notify_config[mac][token], f'\n案場預警!!\n裝置:{mac}\n溫度值:{temperature}°C,煙值:{smoke}%')
-            with open('alert_log.txt','a+',encoding='utf-8') as file: # a+ 打開一個文件用於讀寫。如果該文件已存在，文件指針將會放在文件的结尾。文件打開時會是追加模式。如果該文件不存在，創建新文件用於讀寫。
-                log_data='狀態: '+state+','+'裝置識別碼: '+mac+','+'溫度值: '+temperature+'°C,'+'煙值: '+smoke+'%,'+timeString+'\n' # add backslash n for the newline characters at the end of each line
-                file.write(log_data)
-        elif state == "Normal":
-            print(f'''案場狀態正常,裝置識別碼:{mac} 溫度值:{temperature}°C 煙值:{smoke}%''')
-        else:
-            print(f'案場狀態異常，接收到的狀態為:{state}')
-            return f'案場狀態異常，接收到的狀態為:{state}'
-
     return render_template("index.html", homepage_headings=homepage_headings, all_python_record_data=all_record_data )
 
+@app.route("/testpage")
+def test():
+    return render_template("test.html")
 
 # 24hr溫度計錄圖表
 @app.route("/<graph_link_index>/") 
