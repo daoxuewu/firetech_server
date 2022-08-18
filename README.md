@@ -1,5 +1,12 @@
 # firetech_server
 
+## 材料
+raspberry pi  
+![img](static/img/pi_intro.PNG)  
+頂石雲端 CS6000煙溫探測器  
+![img](static/img/cs6000.png){:height="36px" width="36px"}. 
+ 
+
 reference :  
 [Python 讀取、寫入 XML 格式檔案教學](https://officeguide.cc/python-read-write-xml-format-file-tutorial-examples/)  
 [Chart.js 官方文件](https://www.chartjs.org/docs/latest/)  
